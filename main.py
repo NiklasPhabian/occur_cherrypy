@@ -11,30 +11,37 @@ class Occur:
         """
         Overwrites the GET method
         :param args: arguments before '?' (separated by '/')
-        :param kwargs: arguments after '?' (separated by ',')
+        :param kwargs: arguments after '?' (separated by ';')
         :return: either citation, html or data
         """
+        print(cherrypy.request.params)
 
         ext = None
         if len(args):
             ext = args[-1].split('.')[-1]
 
-        if 'opendap_url' in cherrypy.request.params:
-            self.set_opendap_url()
-            raise cherrypy.HTTPRedirect("/")
-        elif 'css' in args or 'images' in args:
+        if 'css' in args or 'images' in args:
             return self.fetch_opendap_response()
-        elif 'opendap_url' in cherrypy.session:
+        elif 'opendap_url' in cherrypy.request.params:
+            self.set_opendap_url()
             if kwargs and '/citation' in list(kwargs)[0]:
                 # We return subset citation if 'citation' in kwargs (after ?)
                 return self.subset_citation()
             elif 'citation' in args:
                 # We return whole citation if 'citation' in args (before ?)
                 return self.dataset_citation()
-            elif ext == 'das' or ext == 'dds' or ext =='ascii' or ext=='nc':
+            elif ext == 'das' or ext == 'dds' or ext =='ascii' or ext == 'nc':
                 return self.fullpage()
             else:
                 return self.frameset()
+        elif 'opendap_url' in cherrypy.session:
+            path = cherrypy.request.path_info
+            if len(cherrypy.request.query_string) > 0:
+                redirect = path + '?' + cherrypy.request.query_string + ';opendap_url=' + cherrypy.session['opendap_url']
+            else:
+                redirect = path + '?opendap_url=' + cherrypy.session['opendap_url']
+            print(redirect)
+            raise cherrypy.HTTPRedirect(redirect)
         else:
             return self.config()
 
@@ -138,7 +145,10 @@ class Occur:
         base = cherrypy.session['opendap_url']
         path = cherrypy.request.path_info
         path = path.replace('opendap/', '')
-        request_line = base + path + '?' + cherrypy.request.query_string
+        cherrypy.request.params.pop('opendap_url', None)
+        query = '?' + ','.join(list(cherrypy.request.params))
+
+        request_line = base + path + query
         return request_line
 
 
