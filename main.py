@@ -157,6 +157,7 @@ if __name__ == '__main__':
         'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
         'tools.sessions.on': True}
     }
+    cherrypy.config.update("server.conf")
     cherrypy.tree.mount(Occur(), '/', conf)
     cherrypy.engine.start()
     cherrypy.engine.block()
