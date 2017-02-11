@@ -1,8 +1,10 @@
 import requests
 import cherrypy
 from citation import Citation
+import config
 
-localhost = 'http://127.0.0.1:8080/opendap'
+host = config.host
+
 
 class Occur:
     exposed = True
@@ -13,8 +15,7 @@ class Occur:
         :param args: arguments before '?' (separated by '/')
         :param kwargs: arguments after '?' (separated by ';')
         :return: either citation, html or data
-        """
-        print(cherrypy.request.params)
+        """        
 
         ext = None
         if len(args):
@@ -41,8 +42,7 @@ class Occur:
             if len(cherrypy.request.query_string) > 0:
                 redirect = path + '?' + cherrypy.request.query_string + ';opendap_url=' + cherrypy.session['opendap_url']
             else:
-                redirect = path + '?opendap_url=' + cherrypy.session['opendap_url']
-            print(redirect)
+                redirect = path + '?opendap_url=' + cherrypy.session['opendap_url']            
             raise cherrypy.HTTPRedirect(redirect)
         else:
             return self.config()
@@ -115,7 +115,7 @@ class Occur:
         opendap_response = self.get_opendap_response()
         html = opendap_response.text
         html = html.replace('document.forms[0]', 'document.forms[1]')
-        html = html.replace(cherrypy.session['opendap_url'], localhost)
+        html = html.replace(cherrypy.session['opendap_url'], host)
         return html
 
     def fetch_opendap_response(self):
