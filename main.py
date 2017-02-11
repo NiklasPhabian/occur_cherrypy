@@ -2,7 +2,7 @@ import requests
 import cherrypy
 from citation import Citation
 
-localhost = 'http://127.0.0.1:8080/opendap/'
+localhost = 'http://127.0.0.1:8080/opendap'
 
 class Occur:
     exposed = True
@@ -30,8 +30,10 @@ class Occur:
             elif 'citation' in args:
                 # We return whole citation if 'citation' in args (before ?)
                 return self.dataset_citation()
-            elif ext == 'das' or ext == 'dds' or ext =='ascii' or ext == 'nc':
+            elif ext == 'das' or ext == 'dds' or ext =='ascii' :                
                 return self.fullpage()
+            elif ext == 'nc' or ext == 'nc4' or ext == 'dods':
+                return self.file_response()                
             else:
                 return self.frameset()
         elif 'opendap_url' in cherrypy.session:
@@ -85,33 +87,36 @@ class Occur:
         return request_line
 
     def fullpage(self):
-        main = self.modified_opendap_response()
+        main = self.get_opendap_response()
         return main
 
     def frameset(self):
-        main = self.modified_opendap_response()
-
+        main = self.html_response()
         with open('frame.html') as template:
             html = template.read()
         html = html.replace('${main_msg}', main)
         html = html.replace('${top_msg}', self.top_frame())
         return html
 
-    def modified_opendap_response(self):
+    def get_opendap_response(self):
         """
         Fetch the response from the opendap server
         :return: opendap response (html incl. header)
         """
         opendap_response = self.fetch_opendap_response()
         cherrypy.response.headers['Content-Type'] = opendap_response.headers['Content-Type']
-        if opendap_response.headers['Content-Type'] == 'text/html':
-            # If the response is an HTML, we bend references to our server
-            html = opendap_response.text
-            html = html.replace('document.forms[0]', 'document.forms[1]')
-            html = html.replace(cherrypy.session['opendap_url'], localhost)
-            return html
-        else:
-            return opendap_response.text
+        return opendap_response
+        
+    def file_response(self):
+        opendap_response = self.get_opendap_response()
+        return opendap_response     
+    
+    def html_response(self):
+        opendap_response = self.get_opendap_response()
+        html = opendap_response.text
+        html = html.replace('document.forms[0]', 'document.forms[1]')
+        html = html.replace(cherrypy.session['opendap_url'], localhost)
+        return html
 
     def fetch_opendap_response(self):
         opendap_url = self.opendap_request_line()
