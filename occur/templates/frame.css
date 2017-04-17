@@ -1,0 +1,16 @@
+    .top {
+        position:absolute;
+        left:0; right:0;
+        height: 92px;
+    }
+    .main {
+        position: absolute;
+        left:0px; top:92px; right:0; bottom:0;
+    }
+
+.top { background: grey; }
+.main { background: white; }
+
+
+
+<div style="border-left:1px solid #000;height:500px"></div>

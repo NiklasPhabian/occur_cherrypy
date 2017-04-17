@@ -1,0 +1,5 @@
+print(cherrypy.request.base)
+print(cherrypy.request.request_line)
+print(cherrypy.request.path_info) 
+print(cherrypy.request.query_string)
+print(cherrypy.request.params)

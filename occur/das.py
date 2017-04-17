@@ -14,11 +14,8 @@ class DAS:
         self.get_author()
         self.get_date()
 
-    def get_institution(self):
-        print('finding institute')
-        print(self.das_txt)
-        match = re.search(u'(?i)String institution "(.*)";', self.das_txt)
-        print(match)
+    def get_institution(self):        
+        match = re.search(u'(?i)String institution "(.*)";', self.das_txt)        
         if match:
             self.institution = match.group(1)
 
