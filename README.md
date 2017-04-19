@@ -12,6 +12,13 @@ The application requires following python packages:
 * requests
 
 
+## Run occur
+OCCUR is written and in tested for python 3.5. 
+The occur folder contains a configuration `server.conf` in which the listening port and the listening address can be configured.
+To lauch OCCUR:
+
+    python3 occur/main.py
+
 ## Dockerize
 The application can be dockerzied using the included Dockerfile.
 
