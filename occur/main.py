@@ -29,16 +29,17 @@ class Occur:
             return self.fetch_opendap_response()
         elif 'opendap_url' in cherrypy.request.params:
             self.set_opendap_url()            
-            if ext == 'das' or ext == 'dds' or ext =='ascii' :                
+            if ext == 'das' or ext == 'dds' :                
                 return self.fullpage()
+            elif ext =='ascii':
+                return self.ascii_response()
             elif ext == 'nc' or ext == 'nc4' or ext == 'dods':
                 return self.file_response()                
             elif ext =='citation':                
                 return self.citation()
             else:
                 return self.frameset()
-        elif 'opendap_url' in cherrypy.session:
-            print('we redirect')
+        elif 'opendap_url' in cherrypy.session:            
             path = cherrypy.request.path_info
             if len(cherrypy.request.query_string) > 0:
                 redirect = path + '?' + cherrypy.request.query_string + ';opendap_url=' + cherrypy.session['opendap_url']
@@ -57,13 +58,14 @@ class Occur:
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         citation = Citation()
         citation.from_das(self.das())
-        citation.dict['url'] = self.trimmed_requestline() + '.html'
+        citation.meta['url'] = self.trimmed_requestline() + '.html'
         citation.add_subset_param_dict(self.subset_params())
         return citation.as_text()
 
     def subset_params(self):        
         params_dict = {}
-        if len(cherrypy.request.params)>0:
+        print(self.opendap_request_line())
+        if len(cherrypy.request.params)>0:            
             params = list(cherrypy.request.params)[0].split('/')[0]            
             params = params.split(',')            
             for param in params:
@@ -74,7 +76,7 @@ class Occur:
 
     def trimmed_requestline(self):
         request_line = self.opendap_request_line()
-        request_line = request_line.replace('/citation', '')
+        request_line = request_line.replace('.citation', '')
         request_line = request_line.replace('.ascii', '')
         request_line = request_line.replace('.html', '')
         request_line = request_line.replace('.das', '')
@@ -100,6 +102,10 @@ class Occur:
         opendap_response = self.fetch_opendap_response()
         cherrypy.response.headers['Content-Type'] = opendap_response.headers['Content-Type']
         return opendap_response
+    
+    def ascii_response(self):
+        opendap_response = self.get_opendap_response()
+        return opendap_response     
         
     def file_response(self):
         opendap_response = self.get_opendap_response()
