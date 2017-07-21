@@ -5,9 +5,10 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read('server.conf')
-host = config['global']['server.socket_host'].replace('\'','')
+host = config['global']['server.socket_host'].replace('\'', '')
 port = config['global']['server.socket_port']
 local_host = 'http://' + host + ':' + port + '/opendap'
+
 
 class Occur:
     exposed = True
@@ -27,26 +28,31 @@ class Occur:
 
         if 'css' in args or 'images' in args:
             return self.fetch_opendap_response()
+        elif 'citation' in cherrypy.request.params:
+            referer = cherrypy.request.headers['Referer']
+            redirect = referer.replace(ext, 'citation')
+            raise cherrypy.HTTPRedirect(redirect)
         elif 'opendap_url' in cherrypy.request.params:
             self.set_opendap_url()            
-            if ext == 'das' or ext == 'dds' or ext =='ascii' :                
+            if ext == 'das' or ext == 'dds':
                 return self.fullpage()
+            elif ext =='ascii':
+                return self.ascii_response()
             elif ext == 'nc' or ext == 'nc4' or ext == 'dods':
                 return self.file_response()                
             elif ext =='citation':                
                 return self.citation()
             else:
                 return self.frameset()
-        elif 'opendap_url' in cherrypy.session:
-            print('we redirect')
+        elif 'opendap_url' in cherrypy.session:            
             path = cherrypy.request.path_info
             if len(cherrypy.request.query_string) > 0:
                 redirect = path + '?' + cherrypy.request.query_string + ';opendap_url=' + cherrypy.session['opendap_url']
             else:
                 redirect = path + '?opendap_url=' + cherrypy.session['opendap_url']            
             raise cherrypy.HTTPRedirect(redirect)
-        else:            
-            return self.config()
+        else:
+            return self.config_page()
 
     def das(self):
         das_request = self.trimmed_requestline() + '.das'
@@ -57,13 +63,14 @@ class Occur:
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         citation = Citation()
         citation.from_das(self.das())
-        citation.dict['url'] = self.trimmed_requestline() + '.html'
+        citation.meta['url'] = self.trimmed_requestline() + '.html'
         citation.add_subset_param_dict(self.subset_params())
         return citation.as_text()
 
     def subset_params(self):        
         params_dict = {}
-        if len(cherrypy.request.params)>0:
+        print(self.opendap_request_line())
+        if len(cherrypy.request.params)>0:            
             params = list(cherrypy.request.params)[0].split('/')[0]            
             params = params.split(',')            
             for param in params:
@@ -74,7 +81,7 @@ class Occur:
 
     def trimmed_requestline(self):
         request_line = self.opendap_request_line()
-        request_line = request_line.replace('/citation', '')
+        request_line = request_line.replace('.citation', '')
         request_line = request_line.replace('.ascii', '')
         request_line = request_line.replace('.html', '')
         request_line = request_line.replace('.das', '')
@@ -87,8 +94,8 @@ class Occur:
 
     def frameset(self):
         main = self.html_response()
-        with open('frame.html') as template:
-            html = template.read()
+        with open('html/frame.html') as frame:
+            html = frame.read()
         html = html.replace('${main_msg}', main)
         html = html.replace('${top_msg}', self.top_frame())
         return html
@@ -100,6 +107,10 @@ class Occur:
         opendap_response = self.fetch_opendap_response()
         cherrypy.response.headers['Content-Type'] = opendap_response.headers['Content-Type']
         return opendap_response
+    
+    def ascii_response(self):
+        opendap_response = self.get_opendap_response()
+        return opendap_response     
         
     def file_response(self):
         opendap_response = self.get_opendap_response()
@@ -118,24 +129,15 @@ class Occur:
         return ret
 
     def top_frame(self):
-        form = """This is OCCUR. Currently using following OPeNDAP Server:
-                        <form method="get">
-                            <input type="text" size=40 value="{opendap_url}" name="opendap_url"/>
-                            <button type="submit">launch</button>
-                        </form>
-                """.format(opendap_url=cherrypy.session['opendap_url'])
-        return form
+        with open('html/top_frame.html') as html_file:
+            top_frame = html_file.read()
+            top_frame = top_frame.format(opendap_url=cherrypy.session['opendap_url'])
+        return top_frame
 
-    def config(self):
-        form = """
-              <body>
-                <form method="get">
-                  <input type="text" size=40 value="http://opendap.jpl.nasa.gov:80/opendap" name="opendap_url"/>
-                  <button type="submit">launch</button>
-                </form>
-              </body>
-            """
-        return form
+    def config_page(self):
+        with open('html/config_page.html') as html_file:
+            config_page = html_file.read()
+        return config_page
     
     def set_opendap_url(self):        
         opendap_url = cherrypy.request.params['opendap_url']

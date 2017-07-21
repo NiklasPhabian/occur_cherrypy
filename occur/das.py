@@ -13,9 +13,11 @@ class DAS:
         self.get_institution()
         self.get_author()
         self.get_date()
+        self.get_title()
 
     def get_institution(self):        
         match = re.search(u'(?i)String institution "(.*)";', self.das_txt)        
+        print(self.das_txt)
         if match:
             self.institution = match.group(1)
 
@@ -29,3 +31,8 @@ class DAS:
         if match:
             self.date = match.group(1)
 
+    
+    def get_title(self):
+        match = re.search(u'(?i)String filename "(.*)";', self.das_txt)
+        if match:
+            self.title = match.group(1)
