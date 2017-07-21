@@ -7,6 +7,7 @@ class DAS:
         self.institution = None
         self.author = None
         self.date = None
+        self.title = None
         self.parse()
 
     def parse(self):
@@ -16,8 +17,7 @@ class DAS:
         self.get_title()
 
     def get_institution(self):        
-        match = re.search(u'(?i)String institution "(.*)";', self.das_txt)        
-        print(self.das_txt)
+        match = re.search(u'(?i)String institution "(.*)";', self.das_txt)
         if match:
             self.institution = match.group(1)
 
