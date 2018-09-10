@@ -56,8 +56,7 @@ class Citation:
                 meta_text += '",'
         meta_text = meta_text[:-1]        
         return str(meta_text)
-    
-    
+
     def as_html(self):
         text = self.as_text()
         html = text.replace('\n', '<br>')

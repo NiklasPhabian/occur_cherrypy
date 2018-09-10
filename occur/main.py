@@ -69,6 +69,7 @@ class Occur:
 
     def subset_params(self):        
         params_dict = {}
+        print(self.opendap_request_line())
         if len(cherrypy.request.params)>0:            
             params = list(cherrypy.request.params)[0].split('/')[0]            
             params = params.split(',')            
